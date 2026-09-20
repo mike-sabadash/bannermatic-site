@@ -7,23 +7,4 @@ import Works from '../sections/Works'
 import Services from '../sections/Services'
 import Recognition from '../sections/Recognition'
 import Footer from '../sections/Footer'
-
-export default function Home() {
-  const [loaded, setLoaded] = useState(false)
-
-  return (
-    <div className="grain bg-[#0e0e0e] text-[#eae7e0] min-h-screen">
-      <Preloader onDone={() => setLoaded(true)} />
-      <main>
-        <Hero started={loaded} />
-        <Marquee items={['Brand', 'Digital', 'Motion', 'Strategy', 'Identity', 'Content', 'E-Commerce', 'Campaign']} dark />
-        <Manifesto />
-        <Works />
-        <Marquee items={['Noir Studio', 'Est. 2016', 'Paris', 'Tokyo', 'New York', 'Independent', 'Award-Winning']} slow />
-        <Services />
-        <Recognition />
-      </main>
-      <Footer />
-    </div>
-  )
-}
+export default function Home(){const [loaded,setLoaded]=useState(false);return <div className="grain bg-[#0e0e0e] text-[#eae7e0] min-h-screen"><Preloader onDone={()=>setLoaded(true)}/><main><Hero started={loaded}/><Marquee items={['Display','HTML5','Motion','Adaptation','Campaigns','Formats','Production','Delivery']} dark/><Manifesto/><Works/><Marquee items={['Bannermatic','Banner Campaigns','Display Ads','Motion','HTML5','Multi-format','Production']} slow/><Services/><Recognition/></main><Footer/></div>}
