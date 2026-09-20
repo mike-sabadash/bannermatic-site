@@ -16,6 +16,39 @@ jobs:
           test -n "$ROOT"
           cp -a "$ROOT"/. .
           test -f package.json
+      - name: Customize Bannermatic copy
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          replacements = {
+              "NOIR": "BANNERMATIC",
+              "PARIS — TOKYO — NYC": "DISPLAY — SOCIAL — MOTION",
+              "PARIS - TOKYO - NYC": "DISPLAY — SOCIAL — MOTION",
+              "An independent design agency crafting brands, websites and products that refuse to be ignored.": "Banner campaigns built for brands that need to move fast, scale cleanly and perform everywhere.",
+              "DIGITAL": "BANNER",
+              "EXPERIENCES": "CAMPAIGNS",
+              "BRAND / DIGITAL / MOTION": "DESIGN / MOTION / DELIVERY",
+              "EST. 2016": "EST. 2026",
+              "AVAILABLE FOR Q3 2026": "AVAILABLE FOR NEW PROJECTS",
+          }
+          roots = [Path("src"), Path("public"), Path("index.html")]
+          changed = []
+          for root in roots:
+              files = [root] if root.is_file() else list(root.rglob("*")) if root.exists() else []
+              for p in files:
+                  if not p.is_file() or p.suffix.lower() not in {".tsx", ".ts", ".jsx", ".js", ".html", ".css", ".json"}:
+                      continue
+                  try: text = p.read_text()
+                  except UnicodeDecodeError: continue
+                  new = text
+                  for a,b in replacements.items(): new = new.replace(a,b)
+                  if new != text:
+                      p.write_text(new)
+                      changed.append(str(p))
+          print("Customized:", *changed, sep="\\n")
+          if not changed:
+              raise SystemExit("No matching Bannermatic source copy found")
+          PY
       - uses: actions/setup-node@v4
         with:
           node-version: 22
