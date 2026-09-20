@@ -2,10 +2,10 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef } from 'react'
 
 const clients = [
-  { name: 'LADA', src: '/clients/lada.svg' },
-  { name: 'Toyota', src: '/clients/toyota.svg' },
-  { name: 'Cadillac', src: '/clients/cadillac.svg' },
-  { name: 'Suzuki', src: '/clients/suzuki.svg' },
+  { name: 'LADA', src: '/clients/lada.webp' },
+  { name: 'Toyota', src: '/clients/toyota.webp' },
+  { name: 'Cadillac', src: '/clients/cadillac.webp' },
+  { name: 'Suzuki', src: '/clients/suzuki.webp' },
 ]
 
 const line1 = 'BANNER'
@@ -35,18 +35,18 @@ export default function Hero({ started }: { started: boolean }) {
       <motion.div style={{ y, opacity }} className="relative">
         <div className="mb-8 md:mb-10 flex justify-center">
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-4 items-center justify-items-center gap-x-8 gap-y-5 w-full max-w-[900px] px-2 sm:px-0"
+            className="grid grid-cols-2 sm:grid-cols-4 items-center justify-items-center gap-x-7 md:gap-x-10 gap-y-4 w-full max-w-[760px] px-6 sm:px-0"
             initial={{ opacity: 0, y: -14 }}
             animate={started ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.75, duration: 0.8 }}
             aria-label="Selected clients"
           >
             {clients.map((client) => (
-              <div key={client.name} className="flex h-14 md:h-16 w-full items-center justify-center px-2">
+              <div key={client.name} className="flex h-10 md:h-12 w-full items-center justify-center px-3">
                 <img
                   src={client.src}
                   alt={client.name}
-                  className="max-h-full max-w-[150px] md:max-w-[175px] object-contain"
+                  className="max-h-full max-w-[118px] md:max-w-[138px] object-contain"
                 />
               </div>
             ))}
