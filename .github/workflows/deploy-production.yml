@@ -12,7 +12,10 @@ jobs:
         run: |
           unzip -q project-bolt-github-hnstivng-dwc6gyw1.zip -d /tmp/bannermatic-src
           cp -a /tmp/bannermatic-src/. .
-          test -f src/main.tsx && test -f package.json
+          ROOT=$(find /tmp/bannermatic-src -name package.json -not -path '*/node_modules/*' -printf '%h\n' | head -1)
+          test -n "$ROOT"
+          cp -a "$ROOT"/. .
+          test -f package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
