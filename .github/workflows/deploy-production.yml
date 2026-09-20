@@ -10,9 +10,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Restore source bundle
         run: |
-          cat .bundle/part* | base64 -d > /tmp/site.tar.gz
-          (gzip -dc /tmp/site.tar.gz > /tmp/site.tar || true)
-          tar -xf /tmp/site.tar --ignore-zeros || true
+          unzip -q project-bolt-github-hnstivng-dwc6gyw1.zip -d /tmp/bannermatic-src
+          cp -a /tmp/bannermatic-src/. .
           test -f src/main.tsx && test -f package.json
       - uses: actions/setup-node@v4
         with:
