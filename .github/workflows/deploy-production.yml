@@ -1,0 +1,59 @@
+name: Deploy Bannermatic Production
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore source bundle
+        run: |
+          cat .bundle/part* | base64 -d > /tmp/site.tar.gz
+          tar -xzf /tmp/site.tar.gz
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.BANNERMATIC_SERVER_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/bannermatic_server
+          chmod 600 ~/.ssh/bannermatic_server
+          ssh-keyscan -p 22 213.182.208.29 >> ~/.ssh/known_hosts
+      - name: Bootstrap Nginx and TLS
+        run: |
+          ssh -i ~/.ssh/bannermatic_server root@213.182.208.29 'bash -s' <<'SERVER'
+          set -e
+          mkdir -p /var/www/bannermatic
+          cat >/etc/nginx/sites-available/bannermatic.rechord.online <<'NGINX'
+          server {
+            listen 80;
+            listen [::]:80;
+            server_name bannermatic.rechord.online;
+            root /var/www/bannermatic;
+            index index.html;
+            location / { try_files $uri $uri/ /index.html; }
+          }
+          NGINX
+          ln -sf /etc/nginx/sites-available/bannermatic.rechord.online /etc/nginx/sites-enabled/bannermatic.rechord.online
+          nginx -t
+          systemctl reload nginx
+          if ! command -v certbot >/dev/null; then
+            apt-get update
+            DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx
+          fi
+          if [ ! -f /etc/letsencrypt/live/bannermatic.rechord.online/fullchain.pem ]; then
+            certbot --nginx -d bannermatic.rechord.online --non-interactive --agree-tos --register-unsafely-without-email --redirect
+          fi
+          SERVER
+      - name: Deploy
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/bannermatic_server" dist/ root@213.182.208.29:/var/www/bannermatic/
+          ssh -i ~/.ssh/bannermatic_server root@213.182.208.29 'nginx -t && systemctl reload nginx'
+      - name: Smoke test
+        run: curl --fail --retry 8 --retry-delay 3 https://bannermatic.rechord.online/
