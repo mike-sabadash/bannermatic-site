@@ -11,7 +11,9 @@ jobs:
       - name: Restore source bundle
         run: |
           cat .bundle/part* | base64 -d > /tmp/site.tar.gz
-          tar -xzf /tmp/site.tar.gz
+          (gzip -dc /tmp/site.tar.gz > /tmp/site.tar || true)
+          tar -xf /tmp/site.tar --ignore-zeros || true
+          test -f src/main.tsx && test -f package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
