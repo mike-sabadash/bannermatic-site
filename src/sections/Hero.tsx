@@ -2,10 +2,10 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef } from 'react'
 
 const clients = [
-  { name: 'LADA', src: '/clients/lada.png' },
-  { name: 'Toyota', src: '/clients/toyota.png' },
-  { name: 'Cadillac', src: '/clients/cadillac.png' },
-  { name: 'Suzuki', src: '/clients/suzuki.png' },
+  { name: 'LADA', src: '/clients/lada.svg' },
+  { name: 'Toyota', src: '/clients/toyota.svg' },
+  { name: 'Cadillac', src: '/clients/cadillac.svg' },
+  { name: 'Suzuki', src: '/clients/suzuki.svg' },
 ]
 
 const line1 = 'BANNER'
