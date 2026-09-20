@@ -1,6 +1,13 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef } from 'react'
 
+const clients = [
+  { name: 'LADA', src: '/clients/lada.png' },
+  { name: 'Toyota', src: '/clients/toyota.png' },
+  { name: 'Cadillac', src: '/clients/cadillac.png' },
+  { name: 'Suzuki', src: '/clients/suzuki.png' },
+]
+
 const line1 = 'BANNER'
 const line2 = 'CAMPAIGNS'
 
@@ -26,6 +33,25 @@ export default function Hero({ started }: { started: boolean }) {
       <div className="absolute top-[-30%] right-[-15%] w-[60vw] h-[60vw] rounded-full bg-[#d7ff3f] opacity-[0.045] blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-[#4f5bff] opacity-[0.05] blur-[120px] pointer-events-none" />
       <motion.div style={{ y, opacity }} className="relative">
+        <div className="mb-8 md:mb-10 flex justify-center">
+          <motion.div
+            className="grid grid-cols-2 sm:grid-cols-4 items-center justify-items-center gap-x-8 gap-y-5 w-full max-w-[900px] px-2 sm:px-0"
+            initial={{ opacity: 0, y: -14 }}
+            animate={started ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.75, duration: 0.8 }}
+            aria-label="Selected clients"
+          >
+            {clients.map((client) => (
+              <div key={client.name} className="flex h-14 md:h-16 w-full items-center justify-center px-2">
+                <img
+                  src={client.src}
+                  alt={client.name}
+                  className="max-h-full max-w-[150px] md:max-w-[175px] object-contain"
+                />
+              </div>
+            ))}
+          </motion.div>
+        </div>
         <div className="flex justify-between items-end mb-6 md:mb-10">
           <motion.p className="max-w-[260px] text-[13px] leading-relaxed text-[#8a877f]" initial={{ opacity: 0, y: 20 }} animate={started ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.9, duration: 0.8 }}>
             We turn campaign ideas into complete banner systems — designed, animated, adapted and ready for every placement.
