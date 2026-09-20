@@ -8,65 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Restore source bundle
-        run: |
-          unzip -q project-bolt-github-hnstivng-dwc6gyw1.zip -d /tmp/bannermatic-src
-          cp -a /tmp/bannermatic-src/. .
-          ROOT=$(find /tmp/bannermatic-src -name package.json -not -path '*/node_modules/*' -printf '%h\n' | head -1)
-          test -n "$ROOT"
-          cp -a "$ROOT"/. .
-          test -f package.json
-      - name: Persist restored source in repository
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          rm -rf .bundle project-bolt-github-hnstivng-dwc6gyw1.zip
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "Source already persisted"
-          else
-            git commit -m "chore: unpack Bannermatic source into repository"
-            git push origin HEAD:main
-          fi
-      - name: Customize Bannermatic copy
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          replacements = {
-              "NOIR": "BANNERMATIC",
-              "PARIS — TOKYO — NYC": "DISPLAY — SOCIAL — MOTION",
-              "PARIS - TOKYO - NYC": "DISPLAY — SOCIAL — MOTION",
-              "An independent design agency crafting brands, websites and products that refuse to be ignored.": "Banner campaigns built for brands that need to move fast, scale cleanly and perform everywhere.",
-              "DIGITAL": "BANNER",
-              "EXPERIENCES": "CAMPAIGNS",
-              "BRAND / DIGITAL / MOTION": "DESIGN / MOTION / DELIVERY",
-              "EST. 2016": "EST. 2026",
-              "AVAILABLE FOR Q3 2026": "AVAILABLE FOR NEW PROJECTS",
-          }
-          roots = [Path("src"), Path("public"), Path("index.html")]
-          changed = []
-          for root in roots:
-              files = [root] if root.is_file() else list(root.rglob("*")) if root.exists() else []
-              for p in files:
-                  if not p.is_file() or p.suffix.lower() not in {".tsx", ".ts", ".jsx", ".js", ".html", ".css", ".json"}:
-                      continue
-                  try: text = p.read_text()
-                  except UnicodeDecodeError: continue
-                  new = text
-                  for a,b in replacements.items(): new = new.replace(a,b)
-                  if new != text:
-                      p.write_text(new)
-                      changed.append(str(p))
-          print("Customized:", *changed, sep="\\n")
-          if not changed:
-              raise SystemExit("No matching Bannermatic source copy found")
-          PY
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+          cache: npm
+      - run: npm ci
       - run: npm run build
       - name: Configure SSH
         env:
@@ -76,35 +22,40 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/bannermatic_server
           chmod 600 ~/.ssh/bannermatic_server
           ssh-keyscan -p 22 213.182.208.29 >> ~/.ssh/known_hosts
-      - name: Bootstrap Nginx and TLS
+      - name: Configure Nginx
         run: |
           ssh -i ~/.ssh/bannermatic_server root@213.182.208.29 'bash -s' <<'SERVER'
           set -e
           mkdir -p /var/www/bannermatic
+          test -f /etc/letsencrypt/live/bannermatic.rechord.online/fullchain.pem
           cat >/etc/nginx/sites-available/bannermatic.rechord.online <<'NGINX'
           server {
             listen 80;
             listen [::]:80;
             server_name bannermatic.rechord.online;
+            return 301 https://$host$request_uri;
+          }
+          server {
+            listen 443 ssl;
+            listen [::]:443 ssl;
+            server_name bannermatic.rechord.online;
             root /var/www/bannermatic;
             index index.html;
+            ssl_certificate /etc/letsencrypt/live/bannermatic.rechord.online/fullchain.pem;
+            ssl_certificate_key /etc/letsencrypt/live/bannermatic.rechord.online/privkey.pem;
+            include /etc/letsencrypt/options-ssl-nginx.conf;
+            ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
             location / { try_files $uri $uri/ /index.html; }
           }
           NGINX
           ln -sf /etc/nginx/sites-available/bannermatic.rechord.online /etc/nginx/sites-enabled/bannermatic.rechord.online
           nginx -t
           systemctl reload nginx
-          if ! command -v certbot >/dev/null; then
-            apt-get update
-            DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx
-          fi
-          if [ ! -f /etc/letsencrypt/live/bannermatic.rechord.online/fullchain.pem ]; then
-            certbot --nginx -d bannermatic.rechord.online --non-interactive --agree-tos --register-unsafely-without-email --redirect
-          fi
           SERVER
       - name: Deploy
         run: |
           rsync -az --delete -e "ssh -i ~/.ssh/bannermatic_server" dist/ root@213.182.208.29:/var/www/bannermatic/
           ssh -i ~/.ssh/bannermatic_server root@213.182.208.29 'nginx -t && systemctl reload nginx'
       - name: Smoke test
-        run: curl --fail --retry 8 --retry-delay 3 https://bannermatic.rechord.online/
+        run: |
+          curl --fail --retry 8 --retry-delay 3 https://bannermatic.rechord.online/ | grep -q '<div id="root"></div>'
