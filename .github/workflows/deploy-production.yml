@@ -1,0 +1,30 @@
+name: Deploy Bannermatic Production
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.BANNERMATIC_SERVER_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/bannermatic_server
+          chmod 600 ~/.ssh/bannermatic_server
+          ssh-keyscan -p 22 213.182.208.29 >> ~/.ssh/known_hosts
+      - name: Deploy
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/bannermatic_server -p 22" dist/ root@213.182.208.29:/var/www/bannermatic/
+          ssh -i ~/.ssh/bannermatic_server -p 22 root@213.182.208.29 'nginx -t && systemctl reload nginx'
+      - name: Smoke test
+        run: curl --fail --retry 5 --retry-delay 3 https://bannermatic.rechord.online/
