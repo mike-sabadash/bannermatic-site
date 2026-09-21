@@ -46,7 +46,7 @@ export default function Hero({ started }: { started: boolean }) {
                 <img
                   src={client.src}
                   alt={client.name}
-                  className="max-h-full max-w-[100px] md:max-w-[118px] object-contain"
+                  className="max-h-full max-w-[100px] md:max-w-[118px] object-contain opacity-[0.35]"
                 />
               </div>
             ))}
